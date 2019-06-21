@@ -1,0 +1,150 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<groupId>de.upb.mike.amt</groupId>
+	<artifactId>AMT</artifactId>
+	<version>0.0.2-SNAPSHOT</version>
+	<packaging>jar</packaging>
+
+	<name>AMT</name>
+	<description>Android Merge Tool</description>
+	<url>https://FoelliX.github.io/AMT</url>
+
+	<properties>
+		<project.build.sourceEncoding>ISO-8859-1</project.build.sourceEncoding>
+		<maven.compiler.source>1.8</maven.compiler.source>
+		<maven.compiler.target>1.8</maven.compiler.target>
+	</properties>
+
+	<build>
+		<defaultGoal>clean install</defaultGoal>
+		<directory>target</directory>
+
+		<outputDirectory>target/classes</outputDirectory>
+		<sourceDirectory>src</sourceDirectory>
+		<testSourceDirectory>testsrc</testSourceDirectory>
+
+		<resources>
+			<resource>
+				<directory>${project.basedir}</directory>
+				<includes>
+					<include>amt.properties</include>
+					<include>config*.xml</include>
+				</includes>
+				<targetPath>${project.basedir}/target/build</targetPath>
+			</resource>
+			<resource>
+				<directory>${project.basedir}/apktool</directory>
+				<includes>
+					<include>*.jar</include>
+				</includes>
+				<targetPath>${project.basedir}/target/build/apktool</targetPath>
+			</resource>
+		</resources>
+
+		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-assembly-plugin</artifactId>
+				<version>3.1.0</version>
+				<executions>
+					<execution>
+						<phase>package</phase>
+						<goals>
+							<goal>single</goal>
+						</goals>
+						<configuration>
+							<archive>
+								<manifest>
+									<mainClass>
+										de.upb.mike.amt.AMT
+									</mainClass>
+								</manifest>
+							</archive>
+							<descriptorRefs>
+								<descriptorRef>jar-with-dependencies</descriptorRef>
+							</descriptorRefs>
+							<outputDirectory>${project.basedir}/target/build</outputDirectory>
+							<finalName>${project.name}-${project.version}</finalName>
+							<appendAssemblyId>false</appendAssemblyId>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-surefire-plugin</artifactId>
+				<version>2.22.0</version>
+				<configuration>
+					<excludedGroups>requiresBuild</excludedGroups>
+					<excludedGroups>systemIsSetup</excludedGroups>
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
+
+	<repositories>
+		<!-- https://sable.github.io/soot/ -->
+		<repository>
+			<id>soot-release</id>
+			<name>soot releases</name>
+			<url>https://soot-build.cs.uni-paderborn.de/nexus/repository/soot-release/</url>
+		</repository>
+	</repositories>
+
+	<dependencies>
+		<!-- https://sable.github.io/soot/ -->
+		<dependency>
+			<groupId>ca.mcgill.sable</groupId>
+			<artifactId>soot</artifactId>
+			<version>3.3.0</version>
+		</dependency>
+		<!-- https://mvnrepository.com/artifact/net.dongliu/apk-parser -->
+		<dependency>
+			<groupId>net.dongliu</groupId>
+			<artifactId>apk-parser</artifactId>
+			<version>2.6.6</version>
+		</dependency>
+		<!-- https://mvnrepository.com/artifact/de.foellix/AQL-System -->
+		<dependency>
+			<groupId>de.foellix</groupId>
+			<artifactId>AQL-System</artifactId>
+			<version>1.2.0</version>
+		</dependency>
+		<!-- https://mvnrepository.com/artifact/org.junit.jupiter/junit-jupiter-api -->
+		<dependency>
+			<groupId>org.junit.jupiter</groupId>
+			<artifactId>junit-jupiter-api</artifactId>
+			<version>5.2.0</version>
+		</dependency>
+		<!-- https://mvnrepository.com/artifact/org.junit.jupiter/junit-jupiter-engine -->
+		<dependency>
+			<groupId>org.junit.jupiter</groupId>
+			<artifactId>junit-jupiter-engine</artifactId>
+			<version>5.2.0</version>
+			<scope>test</scope>
+		</dependency>
+	</dependencies>
+
+	<developers>
+		<developer>
+			<name>Shikun Zhang</name>
+			<email>shikun1102@163.com</email>
+			<organization>Paderborn University</organization>
+			<organizationUrl>https://cs.uni-paderborn.de</organizationUrl>
+		</developer>
+		<developer>
+			<name>Felix Pauck</name>
+			<email>fpauck@mail.uni-paderborn.de</email>
+			<organization>Paderborn University</organization>
+			<organizationUrl>https://cs.uni-paderborn.de</organizationUrl>
+		</developer>
+	</developers>
+
+	<licenses>
+		<license>
+			<name>GNU General Public License v3.0</name>
+			<url>https://www.gnu.org/licenses/gpl-3.0.txt</url>
+		</license>
+	</licenses>
+</project>
