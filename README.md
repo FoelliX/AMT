@@ -44,7 +44,7 @@ java -jar AMT-0.0.2.jar [optional launch parameters] [list of .apk files]
 ````
 for example:
 ````bash
-java -jar AMT-0.0.2.jar -comparison -d short -cfg myConfig.xml A.apk B.apk
+java -jar AMT-0.0.2.jar -comparison -d verbose -cfg myConfig.xml A.apk B.apk
 ````
 This will launch AMT in comparison mode, shorten its output and use `myConfig.xml` as configuration for the underlying AQL-System.
 All launch parameters are listed in the following table:
@@ -54,11 +54,11 @@ All launch parameters are listed in the following table:
 | `-check`  | Turns on the optional *check* mode |
 | `-comparison`  | Turns on the optional *comparison* mode |
 | `-c %FILE%`, `-cfg %FILE%`, `-config %FILE%` | This parameter can be used to specify a different config file for the underlying [AQL-System](https://github.com/FoelliX/AQL-System) (By default: *config.xml* is used) |
-| `-debug "X"`, `-d "X"` | The output generated during the execution of this tool can be set to different levels. `X` may be set to: `error`, `warning`, `normal`, `debug`, `detailed` (ascending precision from left to right). Additionally it can be set to `short`, the output will then be equal to `normal` but shorter at some points. By default it is set to `normal`. |
+| `-debug "X"`, `-d "X"`, `-l "X"`, `-loglevel "X"` | The output generated during the execution of this tool can be set to different levels. `X` may be set to: `error`, `warning`, `debug`, `detailed`, `verbose` (ascending precision from left to right). |
 
 ## Publications
 - *App Merging for Benchmark Speed-Up and Analysis Lift-Up* (Felix Pauck, Shikun Zhang)  
-t.b.a.
+A-Mobile@ASE 2018 [https://ieeexplore.ieee.org/document/8967423](https://ieeexplore.ieee.org/document/8967423)
 
 ## License
 AMT is licensed under the *GNU General Public License v3* (see [LICENSE](https://github.com/FoelliX/AMT/blob/master/LICENSE)).

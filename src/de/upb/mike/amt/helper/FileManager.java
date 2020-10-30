@@ -35,7 +35,7 @@ public class FileManager {
 		final File startFile = new File(startPath);
 		File endFile = new File(endPath);
 		if (endFile.isDirectory()) {
-			endFile = new File(endPath + "/" + startFile.getName());
+			endFile = new File(endPath , startFile.getName());
 		}
 		moveFile(startFile, endFile);
 	}
@@ -50,9 +50,9 @@ public class FileManager {
 		}
 	}
 
-	public static void copyFile(String startPath, String endPath) {
+	public static void copyFile(String startPath, File endPath) {
 		final File startFile = new File(startPath);
-		final File endFile = new File(endPath + "/" + startFile.getName());
+		final File endFile = new File(endPath, startFile.getName());
 		copyFile(startFile, endFile);
 	}
 

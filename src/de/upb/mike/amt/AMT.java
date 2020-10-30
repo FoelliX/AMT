@@ -28,9 +28,10 @@ public class AMT {
 
 	public static void main(String[] args) {
 		// Launch parameters
-		int counter = args.length;
+		int counter = 0;
 		for (int i = 0; i < args.length; i++) {
-			if (args[i].equals("-l") || args[i].equals("-loglevel")) {
+			if (args[i].equals("-l") || args[i].equals("-loglevel") || args[i].equals("-d")
+					|| args[i].equals("-debug")) {
 				if (args[i + 1].equals("error") || args[i + 1].equals(String.valueOf(Log.LOG_LEVEL_ERROR))) {
 					Log.loglevel = Log.LOG_LEVEL_ERROR;
 				} else if (args[i + 1].equals("warning") || args[i + 1].equals(String.valueOf(Log.LOG_LEVEL_WARNING))) {
@@ -45,15 +46,15 @@ public class AMT {
 				} else {
 					Log.loglevel = Log.LOG_LEVEL_NORMAL;
 				}
-				counter = counter - 2;
+				counter += 2;
 				i++;
 			} else if (args[i].equals("-check")) {
 				OPTION_CHECK = true;
-				counter--;
+				counter++;
 			} else if (args[i].equals("-comparison")) {
 				OPTION_CHECK = true;
 				OPTION_COMPARISON = true;
-				counter--;
+				counter++;
 			} else if (args[i].equals("-c") || args[i].equals("-cfg") || args[i].equals("-config")) {
 				final File cfgFile = new File(args[i + 1]);
 				if (cfgFile != null && cfgFile.exists()) {
@@ -61,12 +62,12 @@ public class AMT {
 				} else {
 					Log.log("Could not find config file: " + cfgFile.getAbsolutePath(), Log.LOG_LEVEL_ERROR);
 				}
-				counter = counter - 2;
+				counter += 2;
 				i++;
 			}
 		}
 		final List<File> apkFiles = new ArrayList<>();
-		for (int i = 0; i < counter; i++) {
+		for (int i = counter; i < args.length; i++) {
 			String tempFilename = args[i];
 			if (tempFilename.endsWith(" ")) {
 				tempFilename = tempFilename.substring(0, tempFilename.length() - 1);
@@ -170,8 +171,7 @@ public class AMT {
 		Log.log("successful!\n\n", Log.LOG_LEVEL_NORMAL);
 
 		Log.log("*** Step 5/" + steps + ": Run Apktool (Merge Manifests, Copy Dex) ***", Log.LOG_LEVEL_NORMAL);
-		final MergeManifest mergeManifest = new MergeManifest(Config.getInstance().getApktoolPath(),
-				Config.getInstance().getApktoolJar());
+		final MergeManifest mergeManifest = new MergeManifest();
 		mergeManifest.mergeManifest();
 		Log.log("successful!\n\n", Log.LOG_LEVEL_NORMAL);
 		mergingTimer.stop();

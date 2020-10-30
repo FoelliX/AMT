@@ -2,7 +2,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>de.upb.mike.amt</groupId>
 	<artifactId>AMT</artifactId>
-	<version>0.0.2-SNAPSHOT</version>
+	<version>0.0.3</version>
 	<packaging>jar</packaging>
 
 	<name>AMT</name>
@@ -111,17 +111,11 @@
 			<artifactId>AQL-System</artifactId>
 			<version>1.2.0</version>
 		</dependency>
-		<!-- https://mvnrepository.com/artifact/org.junit.jupiter/junit-jupiter-api -->
+		<!-- https://mvnrepository.com/artifact/org.junit.jupiter/junit-jupiter -->
 		<dependency>
 			<groupId>org.junit.jupiter</groupId>
-			<artifactId>junit-jupiter-api</artifactId>
-			<version>5.2.0</version>
-		</dependency>
-		<!-- https://mvnrepository.com/artifact/org.junit.jupiter/junit-jupiter-engine -->
-		<dependency>
-			<groupId>org.junit.jupiter</groupId>
-			<artifactId>junit-jupiter-engine</artifactId>
-			<version>5.2.0</version>
+			<artifactId>junit-jupiter</artifactId>
+			<version>5.6.0</version>
 			<scope>test</scope>
 		</dependency>
 	</dependencies>

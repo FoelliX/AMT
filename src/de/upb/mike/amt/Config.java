@@ -8,8 +8,8 @@ public class Config {
 
 	private String androidPlatformPath;
 	private String sootOutputPath;
-	private String apktoolPath;
 	private String apktoolJar;
+	private File apktoolPathFile;
 	private File aqlConfig;
 	private File outputFolder;
 	private String aqlQuery;
@@ -39,12 +39,12 @@ public class Config {
 		this.sootOutputPath = sootOutputPath;
 	}
 
-	public String getApktoolPath() {
-		return this.apktoolPath;
+	public File getApktoolPath() {
+		return this.apktoolPathFile;
 	}
 
 	public void setApktoolPath(String apktoolPath) {
-		this.apktoolPath = apktoolPath;
+		this.apktoolPathFile = new File(apktoolPath);
 	}
 
 	public String getApktoolJar() {
