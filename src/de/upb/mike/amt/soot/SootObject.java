@@ -1,9 +1,5 @@
 package de.upb.mike.amt.soot;
 
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -13,15 +9,15 @@ import de.upb.mike.amt.Config;
 import de.upb.mike.amt.Data;
 import de.upb.mike.amt.Log;
 import soot.PackManager;
-import soot.Printer;
+import soot.Scene;
 import soot.SootClass;
 import soot.Transform;
 import soot.options.Options;
+import soot.toDex.DexPrinter;
 
 public class SootObject {
 	public static final int FLAG_READ_NON_LAUNCHER_APPS = 1;
-	public static final int FLAG_MERGE1 = 2;
-	public static final int FLAG_MERGE2 = 3;
+	public static final int FLAG_MERGE = 2;
 
 	private static SootObject instance = new SootObject();
 
@@ -44,7 +40,6 @@ public class SootObject {
 
 		soot.G.reset();
 
-		Options.v().set_allow_phantom_refs(true);
 		if (Log.loglevel > Log.LOG_LEVEL_DEBUG) {
 			Options.v().set_debug(true);
 		} else {
@@ -57,67 +52,59 @@ public class SootObject {
 		}
 		Options.v().set_whole_program(true);
 		Options.v().set_android_jars(Config.getInstance().getAndroidPlatformPath());
+		Options.v().set_allow_phantom_refs(true);
+		Options.v().set_ignore_resolution_errors(true);
+		Options.v().set_prepend_classpath(true);
+		Options.v().set_process_multiple_dex(true);
 
-		if (filePath != null) {
-			List<String> excludeList = new ArrayList<>();
-			excludeList.addAll(
-					Arrays.asList(new String[] { Data.getInstance().getPackageMap().get(filePath) + ".BuildConfig",
-							Data.getInstance().getPackageMap().get(filePath) + ".R",
-							Data.getInstance().getPackageMap().get(filePath) + ".R$*" }));
-			if (flag != FLAG_MERGE1) {
-				excludeList.addAll(Arrays.asList(new String[] { "android.support.*", "com.google.*" }));
-			}
-			Log.log("Excluding: " + excludeList.toString(), Log.LOG_LEVEL_DETAILED);
-			Options.v().set_exclude(excludeList);
+		final List<String> excludeList = new ArrayList<>();
+		excludeList
+				.addAll(Arrays.asList(new String[] { Data.getInstance().getPackageMap().get(filePath) + ".BuildConfig",
+						Data.getInstance().getPackageMap().get(filePath) + ".R",
+						Data.getInstance().getPackageMap().get(filePath) + ".R$*" }));
+		if (flag != FLAG_MERGE) {
+			excludeList.addAll(Arrays.asList(new String[] { "android.support.*", "com.google.*", "androidx.*" }));
 		}
+		Log.log("Excluding: " + excludeList.toString(), Log.LOG_LEVEL_DETAILED);
+		Options.v().set_exclude(excludeList);
 
-		if (flag == FLAG_MERGE2) {
-			Options.v().set_src_prec(Options.src_prec_jimple);
-			Options.v().set_process_dir(Collections.singletonList(Config.getInstance().getSootOutputPath()));
-			Options.v().set_output_format(Options.output_format_dex);
-			Options.v().set_no_writeout_body_releasing(false);
-		} else {
-			Options.v().set_src_prec(Options.src_prec_apk);
-			Options.v().set_process_dir(Collections.singletonList(filePath));
+		Options.v().set_process_dir(Collections.singletonList(filePath));
+		Options.v().set_src_prec(Options.src_prec_apk);
+		if (flag == FLAG_READ_NON_LAUNCHER_APPS) {
 			Options.v().set_output_format(Options.output_format_none);
 			Options.v().set_no_writeout_body_releasing(true);
-		}
-
-		if (flag == FLAG_READ_NON_LAUNCHER_APPS) {
 			PackManager.v().getPack("wjtp").add(new Transform("wjtp.ParseTransformer", new ParseTransformer(filePath)));
-		} else if (flag == FLAG_MERGE1) {
+		} else if (flag == FLAG_MERGE) {
+			Options.v().set_output_format(Options.output_format_dex);
+			Options.v().set_no_writeout_body_releasing(false);
 			PackManager.v().getPack("wjtp")
 					.add(new Transform("wjtp.InstrumentationTransformer", new InstrumentationTransformer()));
 		}
-
-		soot.Main.main(new String[] { "-pp" });
+		Scene.v().loadNecessaryClasses();
+		PackManager.v().runPacks();
+		if (flag == FLAG_MERGE) {
+			Log.log("Writing APK!", Log.LOG_LEVEL_NORMAL);
+			final DexPrinter dp = new DexPrinter();
+			for (final SootClass c : Scene.v().getApplicationClasses()) {
+				try {
+					dp.add(c);
+				} catch (final RuntimeException e) {
+					Log.log("Class \"" + c + "\" could not be written to APK. Reason: Invalid code contained! ("
+							+ e.getClass().getSimpleName() + ": " + e.getLocalizedMessage() + ")", Log.LOG_LEVEL_ERROR);
+				}
+			}
+			dp.print();
+		}
 
 		Log.silence(false);
-		Log.log("done!", Log.LOG_LEVEL_DEBUG);
+		Log.log("Soot: done!", Log.LOG_LEVEL_DEBUG);
 	}
 
 	public String getLauncherActivity() {
-		return launcherActivity;
+		return this.launcherActivity;
 	}
 
 	public void setLauncherActivity(String launcherActivity) {
 		this.launcherActivity = launcherActivity;
-	}
-
-	public static void print(SootClass sc) {
-		PrintWriter writerOut = new PrintWriter(System.out);
-		Printer.v().printTo(sc, writerOut);
-		writerOut.flush();
-	}
-
-	public static void print(SootClass sc, File outputFile) {
-		try (FileWriter fw = new FileWriter(outputFile)) {
-			PrintWriter writerOut = new PrintWriter(fw);
-			Printer.v().printTo(sc, writerOut);
-			writerOut.flush();
-		} catch (IOException e) {
-			Log.log("Cannot write File: " + outputFile.getAbsolutePath() + " (" + e.getClass().getSimpleName() + ": "
-					+ e.getMessage() + ")", Log.LOG_LEVEL_ERROR);
-		}
 	}
 }

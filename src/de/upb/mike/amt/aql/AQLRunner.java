@@ -8,6 +8,7 @@ import java.util.List;
 import de.foellix.aql.config.ConfigHandler;
 import de.foellix.aql.datastructure.Answer;
 import de.foellix.aql.datastructure.Flow;
+import de.foellix.aql.datastructure.Flows;
 import de.foellix.aql.datastructure.KeywordsAndConstants;
 import de.foellix.aql.datastructure.Reference;
 import de.foellix.aql.datastructure.handler.AnswerHandler;
@@ -29,9 +30,9 @@ public class AQLRunner {
 	}
 
 	public Answer parseApp() {
-		Log.log("Issuing AQL-Query: \"" + query + "\"", Log.LOG_LEVEL_DEBUG);
+		Log.log("Issuing AQL-Query: \"" + this.query + "\"", Log.LOG_LEVEL_DEBUG);
 		Log.silence(true);
-		Collection<Answer> answerList = aqlSystem.queryAndWait(query);
+		final Collection<Answer> answerList = this.aqlSystem.queryAndWait(this.query);
 		Log.silence(false);
 
 		if (answerList != null && answerList.iterator().hasNext()) {
@@ -44,20 +45,23 @@ public class AQLRunner {
 	public static Answer mergeFlows(List<Answer> resultList, File outputFile, boolean overapproximate) {
 		// Apply unify operator
 		Answer mergedAnswer = new Answer();
-		for (Answer answer : resultList) {
+		for (final Answer answer : resultList) {
 			mergedAnswer = DefaultOperator.unify(mergedAnswer, answer);
+		}
+		if (mergedAnswer.getFlows() == null) {
+			mergedAnswer.setFlows(new Flows());
 		}
 
 		// Over-approximate
 		if (overapproximate) {
-			Collection<Flow> flowsToAdd = new ArrayList<Flow>();
-			for (Flow flow : mergedAnswer.getFlows().getFlow()) {
-				Reference from = Helper.getFrom(flow.getReference());
-				Reference toExists = Helper.getTo(flow.getReference());
-				for (Reference to : Helper.getAllReferences(mergedAnswer)) {
+			final Collection<Flow> flowsToAdd = new ArrayList<Flow>();
+			for (final Flow flow : mergedAnswer.getFlows().getFlow()) {
+				final Reference from = Helper.getFrom(flow.getReference());
+				final Reference toExists = Helper.getTo(flow.getReference());
+				for (final Reference to : Helper.getAllReferences(mergedAnswer)) {
 					if (to.getType().equals(KeywordsAndConstants.REFERENCE_TYPE_TO)
 							&& !EqualsHelper.equals(toExists, to)) {
-						Flow flowToAdd = new Flow();
+						final Flow flowToAdd = new Flow();
 						flowToAdd.getReference().add(from);
 						flowToAdd.getReference().add(to);
 						flowsToAdd.add(flowToAdd);

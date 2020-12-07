@@ -20,6 +20,8 @@ import de.upb.mike.amt.manifest.ParseManifest;
 import de.upb.mike.amt.soot.SootObject;
 
 public class AMT {
+	public static int steps;
+
 	private static boolean OPTION_CHECK = false;
 	private static boolean OPTION_COMPARISON = false;
 
@@ -115,11 +117,11 @@ public class AMT {
 	}
 
 	private void start() {
-		int steps = 5;
+		steps = 5;
 		if (OPTION_COMPARISON) {
-			steps = 7;
+			steps += 2;
 		} else if (OPTION_CHECK) {
-			steps = 6;
+			steps += 1;
 		}
 
 		final Timer amtTimer = new Timer().start();
@@ -142,7 +144,7 @@ public class AMT {
 			if (SootObject.getInstance().getLauncherActivity() == null && parseManifest.containsLauncherActivity()) {
 				SootObject.getInstance().setLauncherActivity(parseManifest.getLauncherActivity());
 				this.launcherAppPath = file.getAbsolutePath();
-				Log.log("Launcher-Activity found: " + SootObject.getInstance().getLauncherActivity() + " ("
+				Log.log("Launcher-Activity selected: " + SootObject.getInstance().getLauncherActivity() + " ("
 						+ this.launcherAppPath + ")", Log.LOG_LEVEL_DEBUG);
 			}
 		}
@@ -155,22 +157,19 @@ public class AMT {
 				SootObject.getInstance().parseApp(apkFile.getAbsolutePath(), SootObject.FLAG_READ_NON_LAUNCHER_APPS);
 			}
 		}
-		// Data.getInstance().rebuildSootClass();
 		Log.log("successful!\n\n", Log.LOG_LEVEL_NORMAL);
 
 		Log.log("*** Step 3/" + steps + ": Instrumenting Classes ***", Log.LOG_LEVEL_NORMAL);
 		for (final File apkFile : Config.getInstance().getAppPathList()) {
 			if (apkFile.getAbsolutePath().equals(this.launcherAppPath)) {
-				SootObject.getInstance().parseApp(apkFile.getAbsolutePath(), SootObject.FLAG_MERGE1);
+				SootObject.getInstance().parseApp(apkFile.getAbsolutePath(), SootObject.FLAG_MERGE);
 			}
 		}
 		Log.log("successful!\n\n", Log.LOG_LEVEL_NORMAL);
 
-		Log.log("*** Step 4/" + steps + ": Build Merged App ***", Log.LOG_LEVEL_NORMAL);
-		SootObject.getInstance().parseApp(null, SootObject.FLAG_MERGE2);
-		Log.log("successful!\n\n", Log.LOG_LEVEL_NORMAL);
+		// Step 4 is triggered in InstrumentationTransformer
 
-		Log.log("*** Step 5/" + steps + ": Run Apktool (Merge Manifests, Copy Dex) ***", Log.LOG_LEVEL_NORMAL);
+		Log.log("*** Step 5/" + steps + ": Run Apktool (Merge Manifests) ***", Log.LOG_LEVEL_NORMAL);
 		final MergeManifest mergeManifest = new MergeManifest();
 		mergeManifest.mergeManifest();
 		Log.log("successful!\n\n", Log.LOG_LEVEL_NORMAL);

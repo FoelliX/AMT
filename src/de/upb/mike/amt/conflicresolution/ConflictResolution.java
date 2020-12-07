@@ -1,13 +1,9 @@
 package de.upb.mike.amt.conflicresolution;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.Set;
 
-import de.foellix.aql.datastructure.Hash;
-import de.upb.mike.amt.SootObjHashed;
 import de.upb.mike.amt.Data;
 import de.upb.mike.amt.Log;
-import soot.RefType;
 import soot.SootClass;
 import soot.util.Chain;
 
@@ -16,45 +12,40 @@ public class ConflictResolution {
 
 	private Chain<SootClass> sootClasses;
 
-	private Map<SootObjHashed, String> outerClassMap;
-
 	public ConflictResolution(Chain<SootClass> initSootClasses) {
 		this.sootClasses = initSootClasses;
-		this.outerClassMap = new HashMap<>();
 	}
 
-	public void resolveConflict(SootClass sootClass, Hash currentAppHash) {
-		String originalName = sootClass.getName();
-
-		// Probably rename outer class
-		String rename = null;
-		if (sootClass.hasOuterClass()) {
-			String outerClassOriginalName = outerClassMap
-					.get(new SootObjHashed(sootClass.getOuterClass().getName(), currentAppHash));
-			rename = Data.getInstance().getClassesChanged()
-					.get(new SootObjHashed(outerClassOriginalName, currentAppHash));
-			if (rename != null) {
-				sootClass.setName(sootClass.getName().replace(outerClassOriginalName, rename));
-				sootClass.setRefType(RefType.v(sootClass.getName()));
-			}
-		}
-
-		// Resolve conflict (if existent)
+	public void resolveConflictOuter(SootClass sootClass, Set<SootClass> innerClasses) {
+		// Resolve conflicts
 		if (isConflicted(sootClass.getName())) {
-			sootClass.setName(makeUnique(sootClass.getName()));
-			sootClass.setRefType(RefType.v(sootClass.getName()));
-			Data.getInstance().getClassesChanged().put(new SootObjHashed(originalName, currentAppHash),
-					sootClass.getName());
-			outerClassMap.put(new SootObjHashed(sootClass.getName(), currentAppHash), originalName);
-			Log.log("Class " + originalName + " renamed to " + sootClass.getName() + " (Innerclass mode)",
-					Log.LOG_LEVEL_DETAILED);
-		} else if (rename != null) {
-			Data.getInstance().getClassesChanged().put(new SootObjHashed(originalName, currentAppHash),
-					sootClass.getName());
-			Log.log("Class " + originalName + " renamed to " + sootClass.getName() + " (Outerclass mode)",
-					Log.LOG_LEVEL_DETAILED);
+			final String oldName = sootClass.getName();
+			final String newName = makeUnique(sootClass.getName());
+			resolveConflictInner(innerClasses, oldName, newName);
+			rename(sootClass, oldName, newName, false);
 		}
-		sootClasses.add(sootClass);
+
+		// Add classes
+		this.sootClasses.add(sootClass);
+		for (final SootClass innerClass : innerClasses) {
+			this.sootClasses.add(innerClass);
+		}
+	}
+
+	private void resolveConflictInner(Set<SootClass> innerClasses, String outestClassOldName,
+			String outestClassNewName) {
+		for (final SootClass sootClass : innerClasses) {
+			final String oldName = new String(sootClass.getName());
+			final String newName = sootClass.getName().replace(outestClassOldName, outestClassNewName);
+			rename(sootClass, oldName, newName, true);
+		}
+	}
+
+	private void rename(SootClass sootClass, String oldName, String newName, boolean innerClass) {
+		sootClass.rename(newName);
+		Data.getInstance().getClassesChanged().put(Data.getInstance().getSootClassMap().get(sootClass), newName);
+		Log.log("Class \"" + oldName + "\" renamed to \"" + newName + "\" (" + (innerClass ? "inner" : "outer")
+				+ " class)", Log.LOG_LEVEL_DETAILED);
 	}
 
 	private String makeUnique(String name) {
@@ -67,8 +58,8 @@ public class ConflictResolution {
 	}
 
 	private boolean isConflicted(String sootClassName) {
-		for (SootClass conflictClass : sootClasses) {
-			String conflictClassName = conflictClass.getName();
+		for (final SootClass conflictClass : this.sootClasses) {
+			final String conflictClassName = conflictClass.getName();
 			if (sootClassName.equals(conflictClassName)) {
 				return true;
 			}

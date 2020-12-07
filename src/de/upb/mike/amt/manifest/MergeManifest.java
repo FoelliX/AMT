@@ -38,15 +38,22 @@ public class MergeManifest {
 
 	public void mergeManifest() {
 		// Copy apk
-		FileManager.copyFile(Config.getInstance().getAppPathList().get(0).getAbsolutePath(),
-				Config.getInstance().getApktoolPath());
+		final File apkToolApk = new File(Config.getInstance().getApktoolPath(),
+				Config.getInstance().getAppPathList().get(0).getName());
+		FileManager.moveFile(new File(Config.getInstance().getSootOutputPath(),
+				Config.getInstance().getAppPathList().get(0).getName()), apkToolApk);
 
 		// Modify Manifest
 		modifyManifest();
 
-		// Copy back
-		FileManager.moveFile(Config.getInstance().getApktoolPath() + "/" + this.launcherAppName + "/dist/"
-				+ this.launcherApp.getName(), Config.getInstance().getSootOutputPath() + "/merged.apk");
+		// Copy back & delete input
+		if (!FileManager.moveFile(Config.getInstance().getApktoolPath() + "/" + this.launcherAppName + "/dist/"
+				+ this.launcherApp.getName(), Config.getInstance().getSootOutputPath() + "/merged.apk")) {
+			FileManager.moveFile(apkToolApk.getAbsolutePath(),
+					Config.getInstance().getSootOutputPath() + "/merged.apk");
+		} else {
+			apkToolApk.delete();
+		}
 
 		// Delete temporary files and folders of ApkTool
 		FileManager.deleteDir(Config.getInstance().getApktoolPath() + "/" + this.launcherAppName);
@@ -54,7 +61,7 @@ public class MergeManifest {
 	}
 
 	private void modifyManifest() {
-		executeCmdCommand("java -jar " + Config.getInstance().getApktoolJar() + " d " + this.launcherApp.getName(),
+		executeCmdCommand("java -jar " + Config.getInstance().getApktoolJar() + " -f d " + this.launcherApp.getName(),
 				Config.getInstance().getApktoolPath());
 
 		try {
@@ -196,15 +203,19 @@ public class MergeManifest {
 		}
 
 		// Replace classes
-		final File dexFile = new File(Config.getInstance().getSootOutputPath()
-				+ (Config.getInstance().getSootOutputPath().endsWith("/") ? "" : "/") + "classes.dex");
-		final File moveTo = new File(Config.getInstance().getApktoolPath(), this.launcherAppName + "/classes.dex");
-		FileManager.moveFile(dexFile, moveTo);
+		// for (final File dexFile : new File(Config.getInstance().getSootOutputPath())
+		// .listFiles((dir, name) -> name.toLowerCase().endsWith(".dex"))) {
+		// final File moveTo = new File(Config.getInstance().getApktoolPath(),
+		// this.launcherAppName + "/" + dexFile.getName());
+		// FileManager.moveFile(dexFile, moveTo);
+		// }
 
-		// build modified apk
+		// Build APK with modified manifest
 		executeCmdCommand("java -jar " + Config.getInstance().getApktoolJar() + " b " + this.launcherAppName,
 				Config.getInstance().getApktoolPath());
 	}
+
+	private static boolean running = true;
 
 	public static void executeCmdCommand(String command, File workDir) {
 		try {
@@ -212,16 +223,55 @@ public class MergeManifest {
 			pb.directory(workDir);
 			Log.log("Executing Apktool: " + command, Log.LOG_LEVEL_DEBUG);
 			final Process process = pb.start();
+
+			running = true;
+			// Pipe output
+			new Thread(() -> {
+				final InputStream in = process.getInputStream();
+				final BufferedReader br = new BufferedReader(new InputStreamReader(in));
+				try {
+					while (running) {
+						Thread.sleep(500);
+						String line = br.readLine();
+						while (line != null) {
+							Log.log(line, Log.LOG_LEVEL_DETAILED);
+							line = br.readLine();
+						}
+					}
+					br.close();
+				} catch (final IOException | InterruptedException e) {
+					Log.log("Error while running \"" + command + "\" in \"" + workDir.getAbsolutePath() + "\". ("
+							+ e.getClass().getSimpleName() + ": " + e.getMessage() + ")", Log.LOG_LEVEL_ERROR);
+					if (Log.loglevel >= Log.LOG_LEVEL_DEBUG) {
+						e.printStackTrace();
+					}
+				}
+			}).start();
+			// Pipe error-output
+			new Thread(() -> {
+				final InputStream err = process.getErrorStream();
+				final BufferedReader br = new BufferedReader(new InputStreamReader(err));
+				try {
+					while (running) {
+						Thread.sleep(500);
+						String line = br.readLine();
+						while (line != null) {
+							Log.log(line, Log.LOG_LEVEL_DETAILED);
+							line = br.readLine();
+						}
+					}
+					br.close();
+				} catch (final IOException | InterruptedException e) {
+					Log.log("Error while running \"" + command + "\" in \"" + workDir.getAbsolutePath() + "\". ("
+							+ e.getClass().getSimpleName() + ": " + e.getMessage() + ")", Log.LOG_LEVEL_ERROR);
+					if (Log.loglevel >= Log.LOG_LEVEL_DEBUG) {
+						e.printStackTrace();
+					}
+				}
+			}).start();
+
 			process.waitFor();
-
-			final InputStream in = process.getInputStream();
-
-			final BufferedReader br = new BufferedReader(new InputStreamReader(in));
-			String line = br.readLine();
-			while (line != null) {
-				Log.log(line, Log.LOG_LEVEL_DETAILED);
-				line = br.readLine();
-			}
+			running = false;
 		} catch (IOException | InterruptedException e) {
 			Log.log("Error while running \"" + command + "\" in \"" + workDir.getAbsolutePath() + "\". ("
 					+ e.getClass().getSimpleName() + ": " + e.getMessage() + ")", Log.LOG_LEVEL_ERROR);

@@ -3,6 +3,7 @@ package de.upb.mike.amt;
 import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.w3c.dom.Document;
 
@@ -14,11 +15,11 @@ import soot.SootClass;
 public class Data {
 	private static Data instance = new Data();
 
-	private Map<SootClass, Hash> sootClassMap = new HashMap<>();
+	private Map<SootClass, SootObjHashed> sootClassMap = new ConcurrentHashMap<>();
 	private Map<Document, File> docMap = new HashMap<>();
-	private Map<String, String> lifecycleMethodSignaturesChanged = new HashMap<>();
-	private Map<SootObjHashed, String> classesChanged = new HashMap<>();
-	private Map<File, Hash> hashMap = new HashMap<>();
+	private Map<String, String> lifecycleMethodSignaturesChanged = new ConcurrentHashMap<>();
+	private Map<SootObjHashed, String> classesChanged = new ConcurrentHashMap<>();
+	private Map<File, Hash> hashMap = new ConcurrentHashMap<>();
 	private Map<String, String> packageMap = new HashMap<>();
 
 	private Data() {
@@ -29,45 +30,45 @@ public class Data {
 	}
 
 	public void receiveClass(SootClass sc, File appFile) {
-		if (!sootClassMap.containsKey(sc) && !sc.isPhantom()) {
-			sootClassMap.put(sc, putOrGetMapEntry(appFile));
+		if (!this.sootClassMap.containsKey(sc) && !sc.isPhantom()) {
+			this.sootClassMap.put(sc, new SootObjHashed(sc.getName(), putOrGetMapEntry(appFile)));
 		}
 	}
 
 	public Hash putOrGetMapEntry(File appFile) {
 		Hash appHash;
-		if (hashMap.containsKey(appFile)) {
-			appHash = hashMap.get(appFile);
+		if (this.hashMap.containsKey(appFile)) {
+			appHash = this.hashMap.get(appFile);
 		} else {
 			appHash = new Hash();
 			appHash.setType(KeywordsAndConstants.HASH_TYPE_SHA1);
 			appHash.setValue(HashHelper.sha1Hash(appFile));
-			hashMap.put(appFile, appHash);
+			this.hashMap.put(appFile, appHash);
 		}
 		return appHash;
 	}
 
-	public Map<SootClass, Hash> getSootClassMap() {
-		return sootClassMap;
+	public Map<SootClass, SootObjHashed> getSootClassMap() {
+		return this.sootClassMap;
 	}
 
 	public Map<Document, File> getDocMap() {
-		return docMap;
+		return this.docMap;
 	}
 
 	public Map<String, String> getLifecycleMethodSignaturesChanged() {
-		return lifecycleMethodSignaturesChanged;
+		return this.lifecycleMethodSignaturesChanged;
 	}
 
 	public Map<SootObjHashed, String> getClassesChanged() {
-		return classesChanged;
+		return this.classesChanged;
 	}
 
 	public Map<String, String> getPackageMap() {
-		return packageMap;
+		return this.packageMap;
 	}
 
 	public Map<File, Hash> getHashMap() {
-		return hashMap;
+		return this.hashMap;
 	}
 }

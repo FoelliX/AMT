@@ -24,46 +24,46 @@ public class ParseManifest {
 
 	public ParseManifest(File appFile) {
 		this.appFile = appFile;
-		containsLauncherActivity = false;
+		this.containsLauncherActivity = false;
 		parse();
 	}
 
 	private void parse() {
 		String manifestAsString = null;
 		try {
-			manifestAsString = ApkParsers.getManifestXml(appFile);
-			Log.log("Manifest (" + appFile.getAbsolutePath() + ")\n" + manifestAsString, Log.LOG_LEVEL_VERBOSE);
-		} catch (IOException e) {
-			Log.log("Could not read manifest of " + appFile.getAbsolutePath() + " (" + e.getClass().getSimpleName()
+			manifestAsString = ApkParsers.getManifestXml(this.appFile);
+			Log.log("Manifest (" + this.appFile.getAbsolutePath() + ")\n" + manifestAsString, Log.LOG_LEVEL_VERBOSE);
+		} catch (final IOException e) {
+			Log.log("Could not read manifest of " + this.appFile.getAbsolutePath() + " (" + e.getClass().getSimpleName()
 					+ ": " + e.getMessage() + ")", Log.LOG_LEVEL_ERROR);
 		}
 
 		try {
-			ByteArrayInputStream input = new ByteArrayInputStream(manifestAsString.getBytes("UTF-8"));
-			DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-			DocumentBuilder builder = factory.newDocumentBuilder();
-			Document doc = builder.parse(input);
-			Data.getInstance().getDocMap().put(doc, appFile);
+			final ByteArrayInputStream input = new ByteArrayInputStream(manifestAsString.getBytes("UTF-8"));
+			final DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+			final DocumentBuilder builder = factory.newDocumentBuilder();
+			final Document doc = builder.parse(input);
+			Data.getInstance().getDocMap().put(doc, this.appFile);
 
 			// Package
-			packageName = doc.getElementsByTagName("manifest").item(0).getAttributes().getNamedItem("package")
+			this.packageName = doc.getElementsByTagName("manifest").item(0).getAttributes().getNamedItem("package")
 					.getNodeValue();
-			Log.log("Package identified: " + packageName, Log.LOG_LEVEL_DETAILED);
+			Log.log("Package identified: " + this.packageName, Log.LOG_LEVEL_DETAILED);
 
 			// Launcher Activity
-			NodeList intentFilters = doc.getElementsByTagName("intent-filter");
+			final NodeList intentFilters = doc.getElementsByTagName("intent-filter");
 			for (int i = 0; i < intentFilters.getLength(); i++) {
-				Node intentFilter = intentFilters.item(i);
-				NodeList children = intentFilter.getChildNodes();
+				final Node intentFilter = intentFilters.item(i);
+				final NodeList children = intentFilter.getChildNodes();
 
 				boolean actionFound = false;
 				boolean categoryFound = false;
 				for (int j = 0; j < children.getLength(); j++) {
-					Node element = children.item(j);
+					final Node element = children.item(j);
 					if (element.hasAttributes()) {
-						Node attr = element.getAttributes().getNamedItem("android:name");
+						final Node attr = element.getAttributes().getNamedItem("android:name");
 						if (attr != null) {
-							String name = attr.getNodeValue();
+							final String name = attr.getNodeValue();
 							if (element.getNodeName().equals("action")) {
 								if (name.equals("android.intent.action.MAIN")) {
 									actionFound = true;
@@ -81,33 +81,39 @@ public class ParseManifest {
 				}
 
 				if (actionFound && categoryFound) {
-					launcherActivity = intentFilter.getParentNode().getAttributes().getNamedItem("android:name")
-							.getNodeValue();
-					if (launcherActivity.startsWith(".")) {
-						launcherActivity = packageName + launcherActivity;
+					if (intentFilter.getParentNode().getNodeName().equals("activity-alias")) {
+						this.launcherActivity = intentFilter.getParentNode().getAttributes()
+								.getNamedItem("android:targetActivity").getNodeValue();
+					} else {
+						this.launcherActivity = intentFilter.getParentNode().getAttributes()
+								.getNamedItem("android:name").getNodeValue();
 					}
-					containsLauncherActivity = true;
-					Log.log("Launcher Activity found: " + launcherActivity, Log.LOG_LEVEL_DETAILED);
+					if (this.launcherActivity.startsWith(".")) {
+						this.launcherActivity = this.packageName + this.launcherActivity;
+					}
+					this.containsLauncherActivity = true;
+					Log.log("Launcher-Activity found: " + this.launcherActivity + " (" + this.appFile.getAbsolutePath()
+							+ ")", Log.LOG_LEVEL_DETAILED);
 
 					break;
 				}
 			}
-		} catch (Exception e) {
-			Log.log("Could not parse manifest of " + appFile.getAbsolutePath() + " (" + e.getClass().getSimpleName()
-					+ ": " + e.getMessage() + ")", Log.LOG_LEVEL_ERROR);
+		} catch (final Exception e) {
+			Log.log("Could not parse manifest of " + this.appFile.getAbsolutePath() + " ("
+					+ e.getClass().getSimpleName() + ": " + e.getMessage() + ")", Log.LOG_LEVEL_ERROR);
 			e.printStackTrace();
 		}
 	}
 
 	public String getPackageName() {
-		return packageName;
+		return this.packageName;
 	}
 
 	public String getLauncherActivity() {
-		return launcherActivity;
+		return this.launcherActivity;
 	}
 
 	public boolean containsLauncherActivity() {
-		return containsLauncherActivity;
+		return this.containsLauncherActivity;
 	}
 }

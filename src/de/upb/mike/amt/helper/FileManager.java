@@ -28,26 +28,31 @@ public class FileManager {
 				}
 			}
 		}
+		Log.log("Deleting directory/file: " + file.getAbsolutePath(), Log.LOG_LEVEL_VERBOSE);
 		return file.delete();
 	}
 
-	public static void moveFile(String startPath, String endPath) {
+	public static boolean moveFile(String startPath, String endPath) {
 		final File startFile = new File(startPath);
 		File endFile = new File(endPath);
 		if (endFile.isDirectory()) {
-			endFile = new File(endPath , startFile.getName());
+			endFile = new File(endPath, startFile.getName());
 		}
-		moveFile(startFile, endFile);
+		return moveFile(startFile, endFile);
 	}
 
-	public static void moveFile(File startFile, File endFile) {
+	public static boolean moveFile(File startFile, File endFile) {
 		if (endFile.exists()) {
 			endFile.delete();
 		}
 		if (!startFile.renameTo(endFile)) {
 			Log.log("File could not be moved from " + startFile.getAbsolutePath() + " to " + endFile.getAbsolutePath(),
 					Log.LOG_LEVEL_ERROR);
+			return false;
 		}
+		Log.log("Moved file from " + startFile.getAbsolutePath() + " to " + endFile.getAbsolutePath(),
+				Log.LOG_LEVEL_VERBOSE);
+		return true;
 	}
 
 	public static void copyFile(String startPath, File endPath) {
@@ -62,6 +67,8 @@ public class FileManager {
 		}
 		try {
 			Files.copy(startFile, endFile);
+			Log.log("Copied file from " + startFile.getAbsolutePath() + " to " + endFile.getAbsolutePath(),
+					Log.LOG_LEVEL_VERBOSE);
 		} catch (final IOException e) {
 			Log.log("File could not be copied from " + startFile.getAbsolutePath() + " to " + endFile.getAbsolutePath(),
 					Log.LOG_LEVEL_ERROR);
@@ -73,23 +80,19 @@ public class FileManager {
 		for (final File file : Config.getInstance().getAppPathList()) {
 			sb.append((sb.length() > 0 ? "_" : "") + file.getName().replace(".apk", ""));
 		}
-		final String folderName = HashHelper.sha1Hash(sb.toString());
-		final File targetFolder = new File(Config.getInstance().getOutputFolder(), folderName.toString());
-		final File jimpleFolder = new File(targetFolder, "jimple");
-		if (deleteDir(targetFolder) && targetFolder.mkdirs() && jimpleFolder.mkdir()) {
+		final File targetFolder = new File(Config.getInstance().getOutputFolder(), HashHelper.sha1Hash(sb.toString()));
+		if (deleteDir(targetFolder) && targetFolder.mkdirs()) {
 			final File sootOutputFolder = new File(Config.getInstance().getSootOutputPath());
 			for (final File file : sootOutputFolder.listFiles()) {
 				if (file.getName().endsWith(".xml")) {
 					file.renameTo(new File(targetFolder, file.getName()));
-				} else if (file.getName().endsWith(".jimple")) {
-					file.renameTo(new File(jimpleFolder, file.getName()));
 				} else if (file.getName().endsWith(".apk")) {
 					final StringBuilder tempSB = new StringBuilder();
 					for (final File tempFile : Config.getInstance().getAppPathList()) {
 						tempSB.append(tempFile.getAbsolutePath() + ", ");
 					}
-					final File copy = new File(
-							"output/" + Helper.getMultipleApkName(tempSB.toString()) + "_merged.apk");
+					final File copy = new File(targetFolder.getParentFile(),
+							Helper.getMultipleApkName(tempSB.toString()) + "_merged.apk");
 					try {
 						if (!copy.exists() || (copy.exists() && copy.delete())) {
 							Files.copy(file, copy);
