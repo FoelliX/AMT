@@ -20,7 +20,7 @@ Multiple input apps are merged into a single merged app.
 On the other hand, Step 6 and 7 stand for *Phase II*.
 During this phase it is evaluated how accurately the merged app represents the input apps.
 In order to guarantee accurately merged benchmarks Phase II becomes indispensable.
-For more information please take a look at the associated [paper](t.b.a.) (see Publications).
+For more information please take a look at the associated [paper](https://ieeexplore.ieee.org/document/8967423) (see Publications).
 
 ## Usage
 Two steps have to be completed in order to use AMT:  
