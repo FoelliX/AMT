@@ -8,7 +8,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.w3c.dom.Document;
 
 import de.foellix.aql.datastructure.Hash;
-import de.foellix.aql.datastructure.KeywordsAndConstants;
 import de.foellix.aql.helper.HashHelper;
 import soot.SootClass;
 
@@ -41,7 +40,7 @@ public class Data {
 			appHash = this.hashMap.get(appFile);
 		} else {
 			appHash = new Hash();
-			appHash.setType(KeywordsAndConstants.HASH_TYPE_SHA1);
+			appHash.setType(HashHelper.HASH_TYPE_SHA1);
 			appHash.setValue(HashHelper.sha1Hash(appFile));
 			this.hashMap.put(appFile, appHash);
 		}

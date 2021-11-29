@@ -36,7 +36,9 @@ public class MergeManifest {
 		this.launcherAppName = this.launcherApp.getName().substring(0, this.launcherApp.getName().lastIndexOf("."));
 	}
 
-	public void mergeManifest() {
+	public boolean mergeManifest() {
+		boolean success = false;
+
 		// Copy apk
 		final File apkToolApk = new File(Config.getInstance().getApktoolPath(),
 				Config.getInstance().getAppPathList().get(0).getName());
@@ -49,6 +51,7 @@ public class MergeManifest {
 		// Copy back & delete input
 		if (!FileManager.moveFile(Config.getInstance().getApktoolPath() + "/" + this.launcherAppName + "/dist/"
 				+ this.launcherApp.getName(), Config.getInstance().getSootOutputPath() + "/merged.apk")) {
+			success = false;
 			FileManager.moveFile(apkToolApk.getAbsolutePath(),
 					Config.getInstance().getSootOutputPath() + "/merged.apk");
 		} else {
@@ -58,6 +61,8 @@ public class MergeManifest {
 		// Delete temporary files and folders of ApkTool
 		FileManager.deleteDir(Config.getInstance().getApktoolPath() + "/" + this.launcherAppName);
 		FileManager.deleteDir(Config.getInstance().getApktoolPath() + "/" + this.launcherApp);
+
+		return success;
 	}
 
 	private void modifyManifest() {

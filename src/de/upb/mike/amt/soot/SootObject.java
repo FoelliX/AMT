@@ -63,7 +63,7 @@ public class SootObject {
 						Data.getInstance().getPackageMap().get(filePath) + ".R",
 						Data.getInstance().getPackageMap().get(filePath) + ".R$*" }));
 		if (flag != FLAG_MERGE) {
-			excludeList.addAll(Arrays.asList(new String[] { "android.support.*", "com.google.*", "androidx.*" }));
+			excludeList.addAll(Config.getInstance().getDefaultExcludes());
 		}
 		Log.log("Excluding: " + excludeList.toString(), Log.LOG_LEVEL_DETAILED);
 		Options.v().set_exclude(excludeList);

@@ -5,38 +5,37 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-import de.foellix.aql.config.ConfigHandler;
 import de.foellix.aql.datastructure.Answer;
 import de.foellix.aql.datastructure.Flow;
 import de.foellix.aql.datastructure.Flows;
-import de.foellix.aql.datastructure.KeywordsAndConstants;
 import de.foellix.aql.datastructure.Reference;
 import de.foellix.aql.datastructure.handler.AnswerHandler;
 import de.foellix.aql.helper.EqualsHelper;
 import de.foellix.aql.helper.Helper;
-import de.foellix.aql.system.DefaultOperator;
-import de.foellix.aql.system.System;
+import de.foellix.aql.helper.KeywordsAndConstantsHelper;
+import de.foellix.aql.system.AQLSystem;
+import de.foellix.aql.system.Options;
+import de.foellix.aql.system.defaulttools.operators.DefaultUnifyOperator;
 import de.upb.mike.amt.Config;
 import de.upb.mike.amt.Log;
 
 public class AQLRunner {
-	private System aqlSystem;
+	private AQLSystem aqlSystem;
 	private String query;
 
 	public AQLRunner(String query) {
 		this.query = query;
-		this.aqlSystem = new System();
-		ConfigHandler.getInstance().setConfig(Config.getInstance().getAqlConfig());
+		this.aqlSystem = new AQLSystem(new Options().setConfig(Config.getInstance().getAqlConfig()));
 	}
 
 	public Answer parseApp() {
 		Log.log("Issuing AQL-Query: \"" + this.query + "\"", Log.LOG_LEVEL_DEBUG);
 		Log.silence(true);
-		final Collection<Answer> answerList = this.aqlSystem.queryAndWait(this.query);
+		final Collection<Object> answerList = this.aqlSystem.queryAndWait(this.query);
 		Log.silence(false);
 
 		if (answerList != null && answerList.iterator().hasNext()) {
-			return answerList.iterator().next();
+			return (Answer) answerList.iterator().next();
 		} else {
 			return new Answer();
 		}
@@ -46,7 +45,7 @@ public class AQLRunner {
 		// Apply unify operator
 		Answer mergedAnswer = new Answer();
 		for (final Answer answer : resultList) {
-			mergedAnswer = DefaultOperator.unify(mergedAnswer, answer);
+			mergedAnswer = new DefaultUnifyOperator().unify(mergedAnswer, answer);
 		}
 		if (mergedAnswer.getFlows() == null) {
 			mergedAnswer.setFlows(new Flows());
@@ -54,12 +53,12 @@ public class AQLRunner {
 
 		// Over-approximate
 		if (overapproximate) {
-			final Collection<Flow> flowsToAdd = new ArrayList<Flow>();
+			final Collection<Flow> flowsToAdd = new ArrayList<>();
 			for (final Flow flow : mergedAnswer.getFlows().getFlow()) {
 				final Reference from = Helper.getFrom(flow.getReference());
 				final Reference toExists = Helper.getTo(flow.getReference());
 				for (final Reference to : Helper.getAllReferences(mergedAnswer)) {
-					if (to.getType().equals(KeywordsAndConstants.REFERENCE_TYPE_TO)
+					if (to.getType().equals(KeywordsAndConstantsHelper.REFERENCE_TYPE_TO)
 							&& !EqualsHelper.equals(toExists, to)) {
 						final Flow flowToAdd = new Flow();
 						flowToAdd.getReference().add(from);

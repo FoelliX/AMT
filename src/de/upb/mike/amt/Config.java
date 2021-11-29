@@ -15,6 +15,7 @@ public class Config {
 	private String aqlQuery;
 	private String comparisonAqlQuery;
 	private List<File> appPathList;
+	private List<String> defaultExcludes;
 
 	private Config() {
 	}
@@ -93,5 +94,13 @@ public class Config {
 
 	public void setComparisonAqlQuery(String comparisonAqlQuery) {
 		this.comparisonAqlQuery = comparisonAqlQuery;
+	}
+
+	public List<String> getDefaultExcludes() {
+		return this.defaultExcludes;
+	}
+
+	public void setDefaultExcludes(List<String> defaultExcludes) {
+		this.defaultExcludes = defaultExcludes;
 	}
 }

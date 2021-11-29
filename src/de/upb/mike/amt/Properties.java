@@ -13,6 +13,7 @@ public class Properties {
 	public static final String AQLQUERY = "aqlQuery";
 	public static final String CPOMPARISON_AQLQUERY = "comparisonAqlQuery";
 	public static final String OUTPUTFOLDER = "outputFolder";
+	public static final String DEFAULT_EXCLUDES = "defaultExcludes";
 
 	private static Properties i = new Properties();
 
@@ -29,7 +30,7 @@ public class Properties {
 		}
 	}
 
-	public static Properties i() {
+	public static Properties getInstance() {
 		return i;
 	}
 

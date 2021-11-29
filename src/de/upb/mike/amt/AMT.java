@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import de.foellix.aql.datastructure.Answer;
@@ -24,6 +25,7 @@ public class AMT {
 
 	private static boolean OPTION_CHECK = false;
 	private static boolean OPTION_COMPARISON = false;
+	private static boolean OPTION_SKIP_MANIFEST = false;
 
 	private String launcherAppPath;
 	private int appNumber;
@@ -50,6 +52,9 @@ public class AMT {
 				}
 				counter += 2;
 				i++;
+			} else if (args[i].equals("-skipManifest") || args[i].equals("-skip") || args[i].equals("-sm")) {
+				OPTION_SKIP_MANIFEST = true;
+				counter++;
 			} else if (args[i].equals("-check")) {
 				OPTION_CHECK = true;
 				counter++;
@@ -94,14 +99,17 @@ public class AMT {
 
 		// Read properties file
 		Config.getInstance().setAndroidPlatformPath(
-				new File(Properties.i().getProperty(Properties.ANDROID_PLATFORMS)).getAbsolutePath());
+				new File(Properties.getInstance().getProperty(Properties.ANDROID_PLATFORMS)).getAbsolutePath());
 		Config.getInstance().setSootOutputPath(new File("sootOutput").getAbsolutePath());
+		Config.getInstance().setApktoolPath(
+				new File(Properties.getInstance().getProperty(Properties.APKTOOLPATH)).getAbsolutePath());
+		Config.getInstance().setApktoolJar(Properties.getInstance().getProperty(Properties.APKTOOLJAR));
+		Config.getInstance().setAqlQuery(Properties.getInstance().getProperty(Properties.AQLQUERY));
 		Config.getInstance()
-				.setApktoolPath(new File(Properties.i().getProperty(Properties.APKTOOLPATH)).getAbsolutePath());
-		Config.getInstance().setApktoolJar(Properties.i().getProperty(Properties.APKTOOLJAR));
-		Config.getInstance().setAqlQuery(Properties.i().getProperty(Properties.AQLQUERY));
-		Config.getInstance().setComparisonAqlQuery(Properties.i().getProperty(Properties.CPOMPARISON_AQLQUERY));
-		Config.getInstance().setOutputFolder(new File(Properties.i().getProperty(Properties.OUTPUTFOLDER)));
+				.setComparisonAqlQuery(Properties.getInstance().getProperty(Properties.CPOMPARISON_AQLQUERY));
+		Config.getInstance().setOutputFolder(new File(Properties.getInstance().getProperty(Properties.OUTPUTFOLDER)));
+		Config.getInstance().setDefaultExcludes(Arrays
+				.asList(Properties.getInstance().getProperty(Properties.DEFAULT_EXCLUDES).replace(" ", "").split(",")));
 
 		// Launch AMT
 		if (FileManager.deleteDir(Config.getInstance().getSootOutputPath())) {
@@ -122,6 +130,9 @@ public class AMT {
 			steps += 2;
 		} else if (OPTION_CHECK) {
 			steps += 1;
+		}
+		if (OPTION_SKIP_MANIFEST) {
+			steps--;
 		}
 
 		final Timer amtTimer = new Timer().start();
@@ -169,10 +180,15 @@ public class AMT {
 
 		// Step 4 is triggered in InstrumentationTransformer
 
-		Log.log("*** Step 5/" + steps + ": Run Apktool (Merge Manifests) ***", Log.LOG_LEVEL_NORMAL);
-		final MergeManifest mergeManifest = new MergeManifest();
-		mergeManifest.mergeManifest();
-		Log.log("successful!\n\n", Log.LOG_LEVEL_NORMAL);
+		if (!OPTION_SKIP_MANIFEST) {
+			Log.log("*** Step 5/" + steps + ": Run Apktool (Merge Manifests) ***", Log.LOG_LEVEL_NORMAL);
+			final MergeManifest mergeManifest = new MergeManifest();
+			if (mergeManifest.mergeManifest()) {
+				Log.log("successful!\n\n", Log.LOG_LEVEL_NORMAL);
+			} else {
+				Log.log("failed!\n\n", Log.LOG_LEVEL_NORMAL);
+			}
+		}
 		mergingTimer.stop();
 
 		if (OPTION_CHECK) {

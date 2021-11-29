@@ -1,4 +1,4 @@
-![Java 8](https://img.shields.io/badge/java-8-brightgreen.svg)
+![Java 17](https://img.shields.io/badge/java-17-brightgreen.svg)
 ---
 <p align="center">
 	<img src="logo.png" width="300px"/>
@@ -32,19 +32,20 @@ The following options can be configured:
 | --------- | ------- |
 | `androidPlatforms=/path/to/Android/sdks/platforms` | The path to the Android platforms directory |
 | `apktoolPath=/path/to/apktool` | [ApkTool](https://github.com/iBotPeaches/Apktool) must be installed and this path has to point to the directory containing ApkTool's JAR file |
-| `apktoolJar=apktool_2.3.4.jar` | Mostly dependent on ApkTool's version, the JAR's filename should be adapted here. |
+| `apktoolJar=apktool_2.6.0.jar` | Mostly dependent on ApkTool's version, the JAR's filename should be adapted here. |
 | `aqlQuery=Flows IN App('%APP_APK%') USES 'FlowDroid' ?` | When run in *check* or *comparison* mode, an [AQL-Query](https://github.com/FoelliX/AQL-System/wiki/Questions) to execute must be defined here. |
 | `comparisonAqlQuery=Flows IN App('%APP_APK%' \| 'COMBINE') USES 'FlowDroid' ?` | The query used for the comparison must be defined here. |
 | `outputFolder=output` | Any output is stored in the specified directory |
+| `defaultExcludes=android.support.*, com.google.*, androidx.*, kotlin.*` | Packages or classes that are excluded while merging. |
 
 - **Step 2: Launch**  
 AMT can be accessed from the command-line as follows:
 ````bash
-java -jar AMT-0.0.2.jar [optional launch parameters] [list of .apk files]
+java -jar AMT-2.0.0.jar [optional launch parameters] [list of .apk files]
 ````
 for example:
 ````bash
-java -jar AMT-0.0.2.jar -comparison -d verbose -cfg myConfig.xml A.apk B.apk
+java -jar AMT-2.0.0.jar -comparison -d verbose -cfg myConfig.xml A.apk B.apk
 ````
 This will launch AMT in comparison mode, shorten its output and use `myConfig.xml` as configuration for the underlying AQL-System.
 All launch parameters are listed in the following table:
